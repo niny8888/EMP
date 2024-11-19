@@ -1,5 +1,6 @@
 package fri.emp.odmevko
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -11,12 +12,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
 import retrofit2.Call
@@ -41,13 +49,13 @@ class MainActivity : ComponentActivity() {
 
         retrofitData.enqueue(object : Callback<MyData?> {
 
-            override fun onResponse(p0: Call<MyData?>, p1: Response<MyData?>) {
-                test = p1.body()?.next.toString()
-                Log.d("TAG: onResponse", "onResponse: " + p1.body())
+            override fun onResponse(call: Call<MyData?>, response: Response<MyData?>) {
+                test = response.body()?.next.toString()
+                Log.d("TAG: onResponse", "onResponse: " + response.body())
             }
 
-            override fun onFailure(p0: Call<MyData?>, p1: Throwable) {
-                // Log.d("TAG: onFaliure", "onFaliure: " + p1.message)
+            override fun onFailure(call: Call<MyData?>, t: Throwable) {
+                Log.e("TAG: onFailure", "onFailure: " + t.message)
             }
         })
     }
@@ -60,34 +68,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OdmevkoTheme {
-                Surface (modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting(name = "Odmevko")
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen(onContinueClick = {
+                        val intent = Intent(this, PlaylistActivity::class.java)
+                        startActivity(intent)
+                    })
                 }
             }
         }
     }
 }
-
+@Preview(showBackground = true, name = "Main Screen Preview")
 @Composable
-fun Greeting(name: String) {
-    Column (
-        modifier = Modifier.fillMaxSize()
+fun MainScreen(onContinueClick: () -> Unit = {}) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = " $name",
-            modifier = Modifier.background(Color.Blue).padding()
+            text = "Welcome to Odmevko",
+            style = MaterialTheme.typography.headlineSmall
         )
-        Text(
-            text = " $name",
-            modifier = Modifier.background(Color.Blue).padding()
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    OdmevkoTheme {
-        Greeting("Android")
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onContinueClick,
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Text(text = "Continue to Playlist")
+        }
     }
 }
