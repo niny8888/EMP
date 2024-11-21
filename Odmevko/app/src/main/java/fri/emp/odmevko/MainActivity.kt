@@ -92,15 +92,29 @@ fun MainScreen(onContinueClick: () -> Unit = {}) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Welcome to Odmevko",
+            text = "Welcome to Odmevko!",
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(24.dp))
+        OutlinedTextField(
+            value = "",
+            onValueChange = { newText -> var text = newText },
+            label = { Text("Enter username") },
+            placeholder = { Text("Type something here...") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = { newText -> var text = newText },
+            label = { Text("Enter password") },
+            placeholder = { Text("Type something here...") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Button(
             onClick = onContinueClick,
             modifier = Modifier.padding(8.dp)
         ) {
-            Text(text = "Continue to Playlist")
+            Text(text = "Log in")
         }
     }
 }

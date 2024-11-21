@@ -1,5 +1,7 @@
 package fri.emp.odmevko
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,7 +37,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
 
 
@@ -56,6 +62,13 @@ class PlaylistActivity : ComponentActivity() {
             }
         }
     }
+    /*
+    private fun odpriPredvajalnik() {
+        val intent = Intent(this, SongActivity::class.java)
+        startActivity(intent)
+    }
+
+     */
 }
 @Preview
 @Composable
@@ -79,85 +92,106 @@ fun PlaylistScreen() {
     var selectedSongId by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var currentSong by remember { mutableStateOf<Song?>(null) }
+    var showMiniPlayer by remember { mutableStateOf(true)}
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        items(songs) { song ->
-            SongItem(
-                song = song,
-                isSelected = song.id == selectedSongId,
-                onClick = {
-                    selectedSongId = song.id
-                    currentSong = song
-                    isPlaying = true
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(){
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = if(showMiniPlayer) 80.dp else 16.dp)
+            ) {
+                items(songs) { song ->
+                    SongItem(
+                        song = song,
+                        isSelected = song.id == selectedSongId,
+                        onClick = {
+                            selectedSongId = song.id
+                            currentSong = song
+                            isPlaying = true
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            }
         }
-    }
-    currentSong?.let {
-        BottomOverlay(song = it, isPlaying = isPlaying, onPlayPauseClicked = {
-            isPlaying = !isPlaying // Toggle play/pause
-        })
+        Row(modifier = Modifier
+            .align(Alignment.BottomCenter)) {
+            if (showMiniPlayer){
+                BottomOverlay(
+                    songTitle = "NOID",
+                    artistName = "Tyler, The Creator",
+                    isPlaying = isPlaying,
+                    onPlayPauseClick = { isPlaying = !isPlaying },
+                    onClick = {
+                        //(LocalContext.current as? ComponentActivity)?.odpriPredvajalnik()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun BottomOverlay(song: Song, isPlaying: Boolean, onPlayPauseClicked: () -> Unit) {
+fun BottomOverlay(
+    songTitle: String,
+    artistName: String,
+    isPlaying: Boolean,
+    onPlayPauseClick: () -> Unit,
+    onClick: () -> Unit = {},
+    modifier: Modifier
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
-            .background(Color.Black.copy(alpha = 0.7f))
-            .padding(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() }
+            .background(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = MaterialTheme.shapes.large
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Album Art
-            Image(
-                painter = rememberAsyncImagePainter(song.imageUrl),
-                contentDescription = "Album art for ${song.name}",
-                modifier = Modifier
-                    .size(50.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = song.name,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
+                    text = songTitle,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = song.artist,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                    text = artistName,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-
-            IconButton(
-                onClick = onPlayPauseClicked,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Filled.Call else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White
+            IconButton(onClick = onClick) {
+                Image(
+                    painter = painterResource(id = R.drawable.pauza),
+                    contentDescription = "slikca albuma :3",
+                    modifier = Modifier.width(48.dp).height(48.dp)
                 )
+
             }
+        }
+        //Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier
+            .align(Alignment.BottomCenter)) {
+            var progress by remember { mutableStateOf(0.5f)}
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 16.dp),
+            )
         }
     }
 }
