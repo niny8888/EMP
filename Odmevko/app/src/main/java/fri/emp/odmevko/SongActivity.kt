@@ -1,6 +1,9 @@
 package fri.emp.odmevko
 
+import android.app.Activity
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -19,7 +22,63 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
+
+
+class SongActivity : ComponentActivity() {
+    private var mediaPlayer: MediaPlayer? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val songTitle = intent.getStringExtra("song_title") ?: "Unknown Title"
+        val songArtist = intent.getStringExtra("song_artist") ?: "Unknown Artist"
+        val songAlbum = intent.getStringExtra("song_album") ?: "Unknown Album"
+        val songImageUrl = intent.getStringExtra("song_image_url") ?: ""
+        val songPlaybackUrl = intent.getStringExtra("song_playback_url") ?: ""
+        Log.d("SongActivity", "Playback URL: $songPlaybackUrl")
+
+
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(songPlaybackUrl)
+                prepareAsync() // Asynchronous preparation
+                setOnPreparedListener { start() } // Start playback when ready
+            }
+        } catch (e: Exception) {
+            Log.e("SongActivity", "Error initializing MediaPlayer: ${e.message}")
+            e.printStackTrace()
+        }
+
+
+        setContent {
+            MusicPlayerScreen(
+                songTitle = songTitle,
+                songArtist = songArtist,
+                songAlbum = songAlbum,
+                songImageUrl = songImageUrl,
+                onPlayPauseClick = { togglePlayPause() }
+            )
+        }
+    }
+
+    private fun togglePlayPause() {
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                it.pause()
+            } else {
+                it.start()
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release() // Release resources when activity is destroyed
+        mediaPlayer = null
+    }
+}
 
 private val Icons.Filled.SkipNext: ImageVector
     get() {
@@ -33,9 +92,9 @@ private val Icons.Filled.Pause: ImageVector
     get() {
         TODO("Not yet implemented")
     }
-@Preview
+
 @Composable
-fun MusicPlayerScreen() {
+fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, songImageUrl: String, onPlayPauseClick: () -> Unit) {
     var isPlaying by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(0.5f) }
 
@@ -51,24 +110,26 @@ fun MusicPlayerScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceBetween) {
-                    Image(
-                        painter = painterResource(id = R.drawable._96872555059),
-                        contentDescription = "slikca albuma :3",
-                        modifier = Modifier.width(280.dp).height(280.dp)
+                    AsyncImage(
+                        model = songImageUrl,
+                        contentDescription = "Album cover",
+                        modifier = Modifier
+                            .width(280.dp)
+                            .height(280.dp)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        text = "NOID",
+                        text = songTitle,
                         style = MaterialTheme.typography.headlineLarge,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "CHROMAKOPIA",
+                        text = songAlbum,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Tyler, The Creator",
+                        text = songArtist,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -93,21 +154,21 @@ fun MusicPlayerScreen() {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = {  },
-                        modifier = Modifier.size(64.dp)) {
+                    IconButton(onClick = { /* Handle previous */ }) {
                         Image(
                             painter = painterResource(id = R.drawable.skipnazaj),
-                            contentDescription = "slikca albuma :3",
-                            modifier = Modifier.width(64.dp).height(64.dp)
+                            contentDescription = "Previous song",
+                            modifier = Modifier.size(64.dp)
                         )
                     }
                     IconButton(onClick = {
                         isPlaying = !isPlaying
+                        onPlayPauseClick()
                     },
                         modifier = Modifier.size(64.dp)) {
                         Image(
                             painter = painterResource(id = R.drawable.pauza),
-                            contentDescription = "slikca albuma :3",
+                            contentDescription = if (isPlaying) "Pause" else "Play",
                             modifier = Modifier.width(64.dp).height(64.dp)
                         )
                     }
@@ -115,7 +176,7 @@ fun MusicPlayerScreen() {
                         modifier = Modifier.size(64.dp)) {
                         Image(
                             painter = painterResource(id = R.drawable.skipnaprej),
-                            contentDescription = "slikca albuma :3",
+                            contentDescription = "Next song",
                             modifier = Modifier.width(64.dp).height(64.dp)
                         )
                     }

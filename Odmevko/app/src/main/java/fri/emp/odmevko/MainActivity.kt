@@ -72,8 +72,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val musicViewModel = MusicViewModel(MusicRepository())
-
         //testing()
 
         enableEdgeToEdge()
@@ -84,8 +82,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    //MusicSearchScreen(viewModel = musicViewModel)
-
                     MainScreen(onContinueClick = {
                         val intent = Intent(this@MainActivity, ProfileActivity::class.java)
                         startActivity(intent)
