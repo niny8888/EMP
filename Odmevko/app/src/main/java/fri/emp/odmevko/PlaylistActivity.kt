@@ -73,65 +73,67 @@ class PlaylistActivity : ComponentActivity() {
 @Preview
 @Composable
 fun PlaylistScreen() {
-    // Sample song data
     val songs = listOf(
-        Song(1, "Lose Yourself", "Eminem", "https://open.spotify.com/track/6atDVsk39X4LS1C3hdgX5l"),
-        Song(2, "Shape of You", "Ed Sheeran", "https://example.com/ed_sheeran_shape_of_you.jpg"),
-        Song(3, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(4, "Muzik", "Jz", "https://example.com/ed_sheeran_shape_of_you.jpg"),
-        Song(5, "Dela", "jz", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(6, "gugu", "gaga", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(7, "Blinding ", " Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(8, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(9, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(10, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(11, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
-        Song(12, "Blinding Lights", "The Weeknd", "https://example.com/ed_sheeran_shape_of_you.jpg") ,
+        Song(1, "Lose Yourself", "Eminem", "https://example.com/eminem.jpg"),
+        Song(2, "Shape of You", "Ed Sheeran", "https://example.com/ed_sheeran.jpg"),
+        Song(3, "Blinding Lights", "The Weeknd", "https://example.com/weeknd.jpg")
     )
 
-    var selectedSongId by remember { mutableStateOf<Int?>(null) }
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
-    var currentSong by remember { mutableStateOf<Song?>(null) }
-    var showMiniPlayer by remember { mutableStateOf(true)}
+    var showMiniPlayer by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Row(){
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = if(showMiniPlayer) 80.dp else 16.dp)
-            ) {
-                items(songs) { song ->
-                    SongItem(
-                        song = song,
-                        isSelected = song.id == selectedSongId,
-                        onClick = {
-                            selectedSongId = song.id
-                            currentSong = song
-                            isPlaying = true
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Song list above the BottomOverlay
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(bottom = if (showMiniPlayer) 80.dp else 16.dp)
+        ) {
+            items(songs) { song ->
+                SongItem(
+                    song = song,
+                    isSelected = selectedSong == song,
+                    onClick = {
+                        selectedSong = song
+                        isPlaying = true
+                        showMiniPlayer = true
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
-        Row(modifier = Modifier
-            .align(Alignment.BottomCenter)) {
-            if (showMiniPlayer){
-                BottomOverlay(
-                    songTitle = "NOID",
-                    artistName = "Tyler, The Creator",
-                    isPlaying = isPlaying,
-                    onPlayPauseClick = { isPlaying = !isPlaying },
-                    onClick = {
-                        //(LocalContext.current as? ComponentActivity)?.odpriPredvajalnik()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+
+        // Spacer ensures BottomOverlay stays below LazyColumn
+        if (showMiniPlayer && selectedSong != null) {
+            BottomOverlay(
+                songTitle = selectedSong?.name ?: "Unknown",
+                artistName = selectedSong?.artist ?: "Unknown Artist",
+                isPlaying = isPlaying,
+                onPlayPauseClick = {
+                    isPlaying = !isPlaying
+                    if (!isPlaying) {
+                        showMiniPlayer = false
+                    }
+                },
+                onDoubleClick = {
+                    // Navigate to SongActivity on double-click
+                    val intent = Intent(context, SongActivity::class.java).apply {
+                        putExtra("song_title", selectedSong?.name)
+                        putExtra("song_artist", selectedSong?.artist)
+                        putExtra("song_image_url", selectedSong?.imageUrl)
+                    }
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
+
 
 @Composable
 fun BottomOverlay(
@@ -139,14 +141,22 @@ fun BottomOverlay(
     artistName: String,
     isPlaying: Boolean,
     onPlayPauseClick: () -> Unit,
-    onClick: () -> Unit = {},
+    onDoubleClick: () -> Unit,
     modifier: Modifier
 ) {
+    var lastClickTime by remember { mutableStateOf(0L) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onClick() }
+            .clickable {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastClickTime < 300) {
+                    onDoubleClick()
+                }
+                lastClickTime = currentTime
+            }
             .background(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shape = MaterialTheme.shapes.large
@@ -174,13 +184,14 @@ fun BottomOverlay(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            IconButton(onClick = onClick) {
+            IconButton(onClick = onPlayPauseClick) {
                 Image(
-                    painter = painterResource(id = R.drawable.pauza),
-                    contentDescription = "slikca albuma :3",
-                    modifier = Modifier.width(48.dp).height(48.dp)
+                    painter = painterResource(
+                        id = if (isPlaying) R.drawable.pauza else R.drawable.skipnaprej
+                    ),
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    modifier = Modifier.size(48.dp)
                 )
-
             }
         }
         //Spacer(modifier = Modifier.height(8.dp))
