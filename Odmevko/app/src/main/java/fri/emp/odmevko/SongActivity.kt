@@ -154,11 +154,12 @@ fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, 
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { /* Handle previous */ }) {
+                    IconButton(onClick = { /* Handle previous */ },
+                        modifier = Modifier.size(64.dp)) {
                         Image(
                             painter = painterResource(id = R.drawable.skipnazaj),
                             contentDescription = "Previous song",
-                            modifier = Modifier.size(64.dp)
+                            modifier = Modifier.width(64.dp).height(64.dp)
                         )
                     }
                     IconButton(onClick = {
