@@ -26,6 +26,8 @@
         </activity>
         <activity android:name=".PlaylistActivity" />
         <activity android:name=".SongActivity" />
+        <activity android:name=".ProfileActivity" />
+
     </application>
 
 </manifest>

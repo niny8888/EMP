@@ -38,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import fri.emp.odmevko.repository.MusicRepository
 import fri.emp.odmevko.viewmodel.MusicViewModel
+import fri.emp.odmevko.ProfileActivity
 import fri.emp.odmevko.viewmodel.MusicViewModelFactory
 import fri.emp.odmevko.ui.screens.MusicSearchScreen
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
@@ -83,11 +84,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MusicSearchScreen(viewModel = musicViewModel)
-                    //MainScreen(onContinueClick = {
-                    //    val intent = Intent(this, PlaylistActivity::class.java)
-                    //    startActivity(intent)
-                    //})
+                    //MusicSearchScreen(viewModel = musicViewModel)
+
+                    MainScreen(onContinueClick = {
+                        val intent = Intent(this@MainActivity, ProfileActivity::class.java)
+                        startActivity(intent)
+                    })
                 }
             }
         }
