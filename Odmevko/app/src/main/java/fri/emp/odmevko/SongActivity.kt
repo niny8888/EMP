@@ -1,6 +1,7 @@
 package fri.emp.odmevko
 
 import android.app.Activity
+import android.content.Context
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
@@ -23,7 +24,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import fri.emp.odmevko.data.DatabaseInstance
+import fri.emp.odmevko.data.SongEntity
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class SongActivity : ComponentActivity() {
@@ -53,13 +59,25 @@ class SongActivity : ComponentActivity() {
 
 
         setContent {
-            MusicPlayerScreen(
-                songTitle = songTitle,
-                songArtist = songArtist,
-                songAlbum = songAlbum,
-                songImageUrl = songImageUrl,
-                onPlayPauseClick = { togglePlayPause() }
-            )
+            OdmevkoTheme {
+                MusicPlayerScreen(
+                    songTitle = songTitle,
+                    songArtist = songArtist,
+                    songAlbum = songAlbum,
+                    songImageUrl = songImageUrl,
+                    onPlayPauseClick = { togglePlayPause() },
+                    onSaveClick = {
+                        saveSongToDatabase(
+                            context = this,
+                            song = SongEntity(
+                                name = songTitle,
+                                artist = songArtist,
+                                imageUrl = songImageUrl
+                            )
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -70,6 +88,16 @@ class SongActivity : ComponentActivity() {
             } else {
                 it.start()
             }
+        }
+    }
+
+    private fun saveSongToDatabase(context: Context, song: SongEntity) {
+        val database = DatabaseInstance.getDatabase(context)
+        val songDao = database.songDao()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            songDao.insertSong(song)
+            Log.d("SongActivity", "Song saved: $song")
         }
     }
 
@@ -94,7 +122,14 @@ private val Icons.Filled.Pause: ImageVector
     }
 
 @Composable
-fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, songImageUrl: String, onPlayPauseClick: () -> Unit) {
+fun MusicPlayerScreen(
+    songTitle: String,
+    songArtist: String,
+    songAlbum: String,
+    songImageUrl: String,
+    onPlayPauseClick: () -> Unit,
+    onSaveClick: () -> Unit // Pass the save functionality as a lambda
+) {
     var isPlaying by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(0.5f) }
 
@@ -182,7 +217,29 @@ fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, 
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { onSaveClick() }, // Call the passed save function
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Save Song")
+                }
             }
         }
     )
 }
+
+
+fun saveSongToDatabase(context: Context, song: SongEntity) {
+    val database = DatabaseInstance.getDatabase(context)
+    val songDao = database.songDao()
+
+    // Save song using coroutine
+    CoroutineScope(Dispatchers.IO).launch {
+        songDao.insertSong(song)
+        Log.d("MusicPlayerScreen", "Song saved: ${song.name}")
+    }
+}
+

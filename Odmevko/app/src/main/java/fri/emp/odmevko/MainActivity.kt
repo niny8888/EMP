@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
 
         //testing()
 
+
         enableEdgeToEdge()
         setContent {
             OdmevkoTheme {

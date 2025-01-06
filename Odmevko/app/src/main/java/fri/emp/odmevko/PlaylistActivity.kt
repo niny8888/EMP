@@ -42,7 +42,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import fri.emp.odmevko.data.DatabaseInstance
+import fri.emp.odmevko.data.SongEntity
 import fri.emp.odmevko.ui.theme.OdmevkoTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 data class Song(val id: Int, val name: String, val artist: String, val imageUrl: String)
@@ -57,7 +61,7 @@ class PlaylistActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PlaylistScreen()
+                    PlaylistScreen(context = this)
                 }
             }
         }
@@ -70,14 +74,17 @@ class PlaylistActivity : ComponentActivity() {
 
      */
 }
-@Preview
+
 @Composable
-fun PlaylistScreen() {
-    val songs = listOf(
-        Song(1, "Lose Yourself", "Eminem", "https://example.com/eminem.jpg"),
-        Song(2, "Shape of You", "Ed Sheeran", "https://example.com/ed_sheeran.jpg"),
-        Song(3, "Blinding Lights", "The Weeknd", "https://example.com/weeknd.jpg")
-    )
+fun PlaylistScreen(context:Context) {
+    var songs by remember { mutableStateOf<List<SongEntity>>(emptyList()) }
+
+    // Load songs from the database
+    LaunchedEffect(Unit) {
+        val database = DatabaseInstance.getDatabase(context)
+        val songDao = database.songDao()
+        songs = withContext(Dispatchers.IO) { songDao.getAllSongs() }
+    }
 
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
@@ -86,7 +93,9 @@ fun PlaylistScreen() {
 
     Column(
         modifier = Modifier.fillMaxSize()
-    ) {
+    ) {if (songs.isEmpty()) {
+        Text("No songs in the playlist.", modifier = Modifier.padding(16.dp))
+    }else {
         // Song list above the BottomOverlay
         LazyColumn(
             modifier = Modifier
@@ -95,13 +104,14 @@ fun PlaylistScreen() {
         ) {
             items(songs) { song ->
                 SongItem(
-                    song = song,
-                    isSelected = selectedSong == song,
-                    onClick = {
-                        selectedSong = song
-                        isPlaying = true
-                        showMiniPlayer = true
-                    }
+                    song = Song(
+                        id = song.id,
+                        name = song.name,
+                        artist = song.artist,
+                        imageUrl = song.imageUrl
+                    ),
+                    isSelected = false,
+                    onClick = {}
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -131,6 +141,7 @@ fun PlaylistScreen() {
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
     }
 }
 
