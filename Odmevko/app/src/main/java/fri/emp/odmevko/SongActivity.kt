@@ -1,6 +1,7 @@
 package fri.emp.odmevko
 
 import android.app.Activity
+import android.database.Cursor
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
@@ -27,18 +28,27 @@ import fri.emp.odmevko.ui.theme.OdmevkoTheme
 
 
 class SongActivity : ComponentActivity() {
+    var db:DB?=null
+    // val songPlaybackStorage = songPlaybackUrl
     private var mediaPlayer: MediaPlayer? = null
+    var songPlaybackUrl = ""
+    var songTitle = ""
+    var songArtist = ""
+    var songAlbum = ""
+    var songImageUrl = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val songTitle = intent.getStringExtra("song_title") ?: "Unknown Title"
-        val songArtist = intent.getStringExtra("song_artist") ?: "Unknown Artist"
-        val songAlbum = intent.getStringExtra("song_album") ?: "Unknown Album"
-        val songImageUrl = intent.getStringExtra("song_image_url") ?: ""
-        val songPlaybackUrl = intent.getStringExtra("song_playback_url") ?: ""
-        Log.d("SongActivity", "Playback URL: $songPlaybackUrl")
+        db = DB(this)
 
+
+        songTitle = intent.getStringExtra("song_title") ?: "Unknown Title"
+        songArtist = intent.getStringExtra("song_artist") ?: "Unknown Artist"
+        songAlbum = intent.getStringExtra("song_album") ?: "Unknown Album"
+        songImageUrl = intent.getStringExtra("song_image_url") ?: ""
+        songPlaybackUrl = intent.getStringExtra("song_playback_url") ?: ""
+        Log.d("SongActivity", "Playback URL: $songPlaybackUrl")
 
         try {
             mediaPlayer = MediaPlayer().apply {
@@ -58,9 +68,11 @@ class SongActivity : ComponentActivity() {
                 songArtist = songArtist,
                 songAlbum = songAlbum,
                 songImageUrl = songImageUrl,
-                onPlayPauseClick = { togglePlayPause() }
+                onPlayPauseClick = { togglePlayPause() },
+                insertData = {insertData()}
             )
         }
+
     }
 
     private fun togglePlayPause() {
@@ -78,6 +90,12 @@ class SongActivity : ComponentActivity() {
         mediaPlayer?.release() // Release resources when activity is destroyed
         mediaPlayer = null
     }
+
+    private fun insertData(){
+        val sqlQueryDodaj = "INSERT INTO PLAYLIST(SONGTITLE, SONGARTIST, SONGALBUM, SONGIMAGE, PLAY) VALUES('$songTitle', '$songArtist', '$songAlbum', '$songImageUrl', '$songPlaybackUrl')"
+        db?.exectueQuery(sqlQueryDodaj)
+        db?.getData()
+    }
 }
 
 private val Icons.Filled.SkipNext: ImageVector
@@ -94,7 +112,7 @@ private val Icons.Filled.Pause: ImageVector
     }
 
 @Composable
-fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, songImageUrl: String, onPlayPauseClick: () -> Unit) {
+fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, songImageUrl: String, onPlayPauseClick: () -> Unit, insertData: () -> Unit) {
     var isPlaying by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(0.5f) }
 
@@ -174,6 +192,14 @@ fun MusicPlayerScreen(songTitle: String, songArtist: String, songAlbum: String, 
                         )
                     }
                     IconButton(onClick = { },
+                        modifier = Modifier.size(64.dp)) {
+                        Image(
+                            painter = painterResource(id = R.drawable.skipnaprej),
+                            contentDescription = "Next song",
+                            modifier = Modifier.width(64.dp).height(64.dp)
+                        )
+                    }
+                    IconButton(onClick = { insertData() },
                         modifier = Modifier.size(64.dp)) {
                         Image(
                             painter = painterResource(id = R.drawable.skipnaprej),

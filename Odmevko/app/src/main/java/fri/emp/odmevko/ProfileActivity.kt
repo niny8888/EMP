@@ -14,7 +14,9 @@ import fri.emp.odmevko.ui.screens.MusicSearchScreen
 import fri.emp.odmevko.viewmodel.MusicViewModel
 
 class ProfileActivity : ComponentActivity() {
+    val db = DB(this)
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContent {
             ProfileScreen()
@@ -34,7 +36,7 @@ class ProfileActivity : ComponentActivity() {
                 onViewPlaylistClick = { currentScreen = Screen.Playlist }
             )
             Screen.MusicSearch -> MusicSearchScreen(viewModel = musicViewModel)
-            Screen.Playlist -> PlaylistScreen() // Replace with actual playlist screen
+            Screen.Playlist -> PlaylistScreen(db)
         }
     }
 
